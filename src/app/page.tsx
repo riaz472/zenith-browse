@@ -1,4 +1,6 @@
 
+"use client";
+
 import ZenithBrowser from '@/components/browser/ZenithBrowser';
 
 export default function Home() {

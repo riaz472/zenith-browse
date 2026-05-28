@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Clock, 
   LayoutGrid, 
@@ -33,6 +33,32 @@ const IconMap: any = {
   Triangle,
   Palette
 };
+
+function HistoryItem({ item, onNavigate }: { item: BrowserPage, onNavigate: (url: string) => void }) {
+  const [formattedTime, setFormattedTime] = useState<string>('');
+
+  useEffect(() => {
+    // Prevent hydration mismatch by generating time only on the client
+    setFormattedTime(new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+  }, [item.timestamp]);
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton 
+        onClick={() => onNavigate(item.url)}
+        className="h-auto py-2.5 flex flex-col items-start gap-0.5"
+      >
+        <div className="flex items-center gap-2 w-full">
+          <Clock className="h-3 w-3 text-primary shrink-0" />
+          <span className="truncate text-sm font-medium">{item.title || item.url}</span>
+        </div>
+        <span className="truncate text-[10px] text-muted-foreground ml-5 opacity-60 group-data-[collapsible=icon]:hidden">
+          {formattedTime || '...'}
+        </span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
 
 export default function SideNav({ onNavigate, history, bookmarks, currentUrl }: SideNavProps) {
   const [activeTab, setActiveTab] = useState<'collections' | 'history'>('collections');
@@ -118,20 +144,7 @@ export default function SideNav({ onNavigate, history, bookmarks, currentUrl }: 
                   </SidebarGroupLabel>
                   {history.length > 0 ? (
                     history.map((item, idx) => (
-                      <SidebarMenuItem key={`${item.url}-${idx}`}>
-                        <SidebarMenuButton 
-                          onClick={() => onNavigate(item.url)}
-                          className="h-auto py-2.5 flex flex-col items-start gap-0.5"
-                        >
-                          <div className="flex items-center gap-2 w-full">
-                            <Clock className="h-3 w-3 text-primary shrink-0" />
-                            <span className="truncate text-sm font-medium">{item.title || item.url}</span>
-                          </div>
-                          <span className="truncate text-[10px] text-muted-foreground ml-5 opacity-60 group-data-[collapsible=icon]:hidden">
-                            {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
+                      <HistoryItem key={`${item.url}-${idx}`} item={item} onNavigate={onNavigate} />
                     ))
                   ) : (
                     <div className="px-4 py-8 text-center group-data-[collapsible=icon]:hidden">

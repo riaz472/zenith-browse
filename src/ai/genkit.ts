@@ -1,7 +1,5 @@
-import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/google-genai';
-
-export const ai = genkit({
-  plugins: [googleAI()],
-  model: 'googleai/gemini-2.5-flash',
-});
+/**
+ * @fileOverview Genkit initialization is disabled for static export builds
+ * to prevent Node.js dependency errors in the browser/Capacitor.
+ */
+export const ai = null;

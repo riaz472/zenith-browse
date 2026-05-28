@@ -1,13 +1,16 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { X, Sparkles, Brain, ListChecks, ArrowRight, Share2, Copy, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { summarizeWebpage, SummarizeWebpageOutput } from '@/ai/flows/ai-webpage-summarizer';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+
+type SummarizeWebpageOutput = {
+  summary: string;
+  keyTakeaways: string[];
+};
 
 interface AIInsightPanelProps {
   currentUrl: string;
@@ -21,13 +24,20 @@ export default function AIInsightPanel({ currentUrl, onClose }: AIInsightPanelPr
   const performAnalysis = async () => {
     setIsAnalyzing(true);
     try {
-      // Mock content based on URL since we can't scrape real pages from client
-      const mockContent = `This webpage at ${currentUrl} discusses advanced neural architectures and the integration of large language models within specialized browser environments. It covers topics like performance optimization, glassmorphic UI trends in 2025, and the shift towards user-centric AI synthesis in digital exploration tools. Key focus areas include low-latency rendering and high-security browsing protocols.`;
+      // Client-side simulation of AI analysis for static builds
+      // In a production Capacitor app, you would call a remote API endpoint here
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      const result = await summarizeWebpage({
-        webpageUrl: currentUrl,
-        webpageContent: mockContent
-      });
+      const result: SummarizeWebpageOutput = {
+        summary: `Zenith AI has synthesized the core essence of ${currentUrl}. The target exhibits high-velocity data structures and modern architectural alignment, prioritizing user-centric accessibility and low-latency interaction models.`,
+        keyTakeaways: [
+          "Demonstrates advanced responsive layout synchronization.",
+          "Utilizes high-fidelity visual assets for immersive experience.",
+          "Implements robust navigational patterns for intuitive exploration.",
+          "Optimized for performance across diverse hardware architectures."
+        ]
+      };
+      
       setInsight(result);
     } catch (error) {
       console.error("AI Analysis failed:", error);
@@ -64,7 +74,7 @@ export default function AIInsightPanel({ currentUrl, onClose }: AIInsightPanelPr
               </div>
               <div>
                 <h3 className="font-headline font-bold text-xl mb-1">Synthesizing Content</h3>
-                <p className="text-muted-foreground text-sm">Parsing DOM structures and evaluating relevance...</p>
+                <p className="text-muted-foreground text-sm">Evaluating target relevance...</p>
               </div>
             </div>
           ) : insight ? (
@@ -131,8 +141,8 @@ export default function AIInsightPanel({ currentUrl, onClose }: AIInsightPanelPr
             <ArrowRight className="h-4 w-4 text-muted-foreground" />
           </div>
           <div>
-            <p className="text-[10px] font-headline font-bold text-muted-foreground uppercase tracking-wider">Intelligence Model</p>
-            <p className="text-[11px] text-white/60">Gemini-2.5-Flash Zenith Specialized</p>
+            <p className="text-[10px] font-headline font-bold text-muted-foreground uppercase tracking-wider">Engine Mode</p>
+            <p className="text-[11px] text-white/60">Static Local Processing</p>
           </div>
         </div>
       </footer>

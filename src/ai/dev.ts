@@ -1,4 +1,4 @@
-import { config } from 'dotenv';
-config();
-
-import '@/ai/flows/ai-webpage-summarizer.ts';
+/**
+ * @fileOverview Genkit dev entry point is disabled for static builds.
+ */
+export {};
