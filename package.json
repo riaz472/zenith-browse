@@ -10,7 +10,11 @@
     "build": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "cap:sync": "npx cap sync",
+    "android:add": "npx cap add android",
+    "android:copy": "npx cap copy android",
+    "android:open": "npx cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
