@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Layout, Compass, Info, ShieldCheck, Search, ExternalLink, Sparkles } from 'lucide-react';
+import { Layout, Compass, Info, ShieldCheck, Search, ExternalLink, Sparkles, Globe, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ViewportProps {
@@ -37,7 +37,7 @@ export default function Viewport({ currentUrl, isLoading }: ViewportProps) {
 
     return (
       <div className="flex-1 bg-background p-8 overflow-y-auto scrollbar-hide">
-        <div className="max-w-3xl mx-auto space-y-8">
+        <div className="max-w-3xl mx-auto space-y-8 pb-20">
           <div className="flex items-center gap-3 border-b border-white/5 pb-6">
             <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center">
               <Search className="h-5 w-5 text-accent" />
@@ -82,6 +82,18 @@ export default function Viewport({ currentUrl, isLoading }: ViewportProps) {
                 </p>
               </motion.div>
             ))}
+          </div>
+
+          <div className="mt-12 pt-8 border-t border-white/5 flex flex-col items-center gap-4">
+            <p className="text-muted-foreground text-sm italic">Not finding what you need in Zenith Intelligence?</p>
+            <Button 
+              variant="outline" 
+              className="border-primary/20 hover:bg-primary/10 gap-2 h-12 px-8 font-headline font-bold"
+              onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank')}
+            >
+              <Globe className="h-4 w-4" />
+              Search on Google
+            </Button>
           </div>
         </div>
       </div>
@@ -139,24 +151,45 @@ export default function Viewport({ currentUrl, isLoading }: ViewportProps) {
 
   return (
     <div className="flex-1 bg-white relative group">
+      <div className="absolute top-0 left-0 right-0 bg-secondary/80 backdrop-blur-md px-4 py-2 border-b border-black/5 flex items-center justify-between z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-2 text-[10px] font-headline font-bold uppercase tracking-wider text-muted-foreground">
+          <Globe className="h-3 w-3" /> External Target Site
+        </div>
+        <Button 
+          variant="secondary" 
+          size="sm" 
+          onClick={() => window.open(currentUrl, '_blank')}
+          className="bg-black text-white hover:bg-neutral-800 text-[10px] h-7 gap-2"
+        >
+          <ExternalLink className="h-3 w-3" /> Open in New Tab
+        </Button>
+      </div>
+      
       <iframe 
         src={currentUrl} 
         className="w-full h-full border-none"
         title="Web View"
         sandbox="allow-scripts allow-same-origin allow-forms"
       />
-      <div className="absolute inset-0 pointer-events-none border-t border-black/5" />
       
-      {/* Overlay to handle potential iframe failures gracefully */}
-      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button 
-          variant="secondary" 
-          size="sm" 
-          onClick={() => window.open(currentUrl, '_blank')}
-          className="bg-white shadow-lg border-white/20 text-black hover:bg-neutral-100"
-        >
-          <ExternalLink className="h-3 w-3 mr-2" /> Open in New Tab
-        </Button>
+      {/* Fallback Overlay for sites that block iframes (e.g. Google, GitHub) */}
+      <div className="absolute inset-0 flex items-center justify-center bg-slate-50/10 pointer-events-none group-hover:pointer-events-auto">
+        <div className="max-w-md w-full mx-4 p-8 glass-dark rounded-3xl shadow-2xl space-y-6 text-center border-white/10 hidden group-[.iframe-failed]:block">
+           <div className="h-16 w-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-4">
+             <AlertCircle className="h-8 w-8 text-accent" />
+           </div>
+           <h3 className="text-xl font-headline font-bold text-white">Privacy Protection Active</h3>
+           <p className="text-sm text-gray-400">
+             This site ({new URL(currentUrl).hostname}) does not allow embedded browsing to protect your session security.
+           </p>
+           <Button 
+             variant="default" 
+             className="w-full bg-primary hover:bg-primary/90 h-12"
+             onClick={() => window.open(currentUrl, '_blank')}
+           >
+             Continue to Site Externally
+           </Button>
+        </div>
       </div>
     </div>
   );

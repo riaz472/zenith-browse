@@ -23,8 +23,9 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
     const query = inputValue.trim();
     if (!query) return;
 
-    // Basic URL detection: starts with protocol or has a dot with no spaces
-    const isUrl = /^(https?:\/\/)/.test(query) || (query.includes('.') && !query.includes(' '));
+    // Basic URL detection: starts with protocol or has a TLD-like structure with no spaces
+    const isUrl = /^(https?:\/\/)/.test(query) || 
+                 (/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+/.test(query) && !query.includes(' '));
 
     if (isUrl) {
       let url = query;
@@ -39,7 +40,7 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
   };
 
   React.useEffect(() => {
-    // Only update input if it's not currently being focused/edited by user to avoid jumping
+    // Sync input with the actual URL when it changes externally
     setInputValue(currentUrl);
   }, [currentUrl]);
 
@@ -59,7 +60,11 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
 
       <form onSubmit={handleSubmit} className="flex-1 relative group">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-muted-foreground">
-          <Shield className="h-3.5 w-3.5 text-accent" />
+          {inputValue.startsWith('http') ? (
+            <Globe className="h-3.5 w-3.5 text-accent" />
+          ) : (
+            <Shield className="h-3.5 w-3.5 text-primary" />
+          )}
           <Search className="h-4 w-4" />
         </div>
         <Input 
