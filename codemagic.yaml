@@ -5,18 +5,20 @@ workflows:
     max_build_duration: 60
     environment:
       node: latest
+      java: 17
     scripts:
       - name: Install dependencies
         script: npm install
       - name: Next.js Static Export Build
         script: npm run build
       - name: Add Android Platform
-        script: npx cap add android
+        script: npx @capacitor/cli add android
       - name: Sync Web Assets to Android
-        script: npx cap sync android
+        script: npx @capacitor/cli sync android
       - name: Build Android Debug APK
         script: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleDebug
     artifacts:
       - android/app/build/outputs/apk/**/*.apk
