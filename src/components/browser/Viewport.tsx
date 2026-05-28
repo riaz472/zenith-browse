@@ -14,7 +14,6 @@ import {
   BookOpen,
   ArrowRight,
   Zap,
-  Layout,
   ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,6 +37,7 @@ const SPEED_DIAL = [
 
 export default function Viewport({ currentUrl, isLoading, onNavigate }: ViewportProps) {
   const isInternal = currentUrl === 'zenith://welcome' || !currentUrl;
+  const isSearch = currentUrl.includes('duckduckgo.com/html');
   
   const urlObj = useMemo(() => {
     try {
@@ -68,7 +68,7 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
           />
         </div>
         <div className="text-center space-y-2">
-          <p className="text-xs font-headline tracking-[0.3em] text-primary uppercase font-bold">Synchronizing Pipeline</p>
+          <p className="text-xs font-headline tracking-[0.3em] text-primary uppercase font-bold">Initializing Pipeline</p>
           <div className="h-1 w-48 bg-white/5 rounded-full overflow-hidden mx-auto">
             <motion.div 
               className="h-full bg-gradient-to-r from-primary to-accent"
@@ -100,7 +100,7 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
                 ZENITH <span className="text-primary italic">BROWSE</span>
               </h1>
               <p className="text-muted-foreground text-xl font-light max-w-2xl mx-auto leading-relaxed">
-                The next generation of intelligent web exploration. Powered by Capacitor Native Bridge.
+                The next generation of intelligent web exploration.
               </p>
             </div>
           </header>
@@ -110,7 +110,7 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
               <h2 className="font-headline font-bold text-xs uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
                 <Zap className="h-3 w-3 text-accent" /> Speed Dial Hub
               </h2>
-              <span className="text-[10px] font-medium text-white/30 uppercase tracking-widest">Instant Native Launch</span>
+              <span className="text-[10px] font-medium text-white/30 uppercase tracking-widest">Instant Connect</span>
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -136,9 +136,9 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { title: 'Native Bridge', icon: Zap, desc: 'Bypasses all web security headers using Android system tabs.' },
-              { title: 'Privacy Shield', icon: ShieldCheck, desc: 'Secure browsing context isolated from the main app thread.' },
-              { title: 'Zero Latency', icon: Globe, desc: 'Renders directly using the native system web engine.' },
+              { title: 'Native Shield', icon: Zap, desc: 'Advanced cross-process isolation for secure web rendering.' },
+              { title: 'Neural Engine', icon: ShieldCheck, desc: 'AI-driven content synthesis and predictive navigation.' },
+              { title: 'Hyper Flow', icon: Globe, desc: 'Low-latency data synchronization across native layers.' },
             ].map((feature, i) => (
               <motion.div 
                 key={i}
@@ -158,10 +158,29 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
     );
   }
 
+  // Use iframe for Search Results (DuckDuckGo HTML is generally iframe-friendly)
+  if (isSearch) {
+    return (
+      <div className="flex-1 bg-white relative">
+        <iframe 
+          src={currentUrl} 
+          className="w-full h-full border-none"
+          title="Search Results"
+        />
+        {/* Loading Overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-[#07090D] flex items-center justify-center z-50">
+             <Zap className="h-10 w-10 text-primary animate-pulse" />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Fallback for External Sites that block iframes
   return (
     <div className="flex-1 bg-[#07090D] flex items-center justify-center p-8">
       <div className="max-w-md w-full glass-dark p-10 rounded-[2.5rem] shadow-2xl space-y-8 text-center border-white/10 relative overflow-hidden">
-         {/* Background glow */}
          <div className="absolute -top-24 -right-24 h-48 w-48 bg-primary/20 blur-[80px] rounded-full" />
          <div className="absolute -bottom-24 -left-24 h-48 w-48 bg-accent/20 blur-[80px] rounded-full" />
 
@@ -177,7 +196,7 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
          <div className="space-y-3 relative z-10">
            <h3 className="text-2xl font-headline font-bold text-white tracking-tight italic uppercase">Native Secure Port</h3>
            <p className="text-sm text-gray-400 leading-relaxed font-light px-4">
-             Zenith is preparing a native system bridge to launch <span className="text-primary font-bold">{urlObj?.hostname || 'Target Site'}</span>. This bypasses all security restrictions.
+             Zenith is preparing a native system bridge to launch <span className="text-primary font-bold">{urlObj?.hostname || 'Target Site'}</span>. This bypasses web security headers.
            </p>
          </div>
 
@@ -187,7 +206,7 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-14 rounded-2xl font-headline font-bold tracking-tight text-lg shadow-[0_0_20px_rgba(71,163,245,0.3)] transition-all active:scale-95"
              onClick={handleNativeLaunch}
            >
-             Launch System Tab
+             Launch Secure Port
              <ArrowRight className="ml-2 h-5 w-5" />
            </Button>
            <div className="flex gap-2">

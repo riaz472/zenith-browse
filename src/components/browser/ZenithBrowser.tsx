@@ -10,7 +10,6 @@ import TabStrip from './TabStrip';
 import AIInsightPanel from './AIInsightPanel';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Preferences } from '@capacitor/preferences';
-import { Browser } from '@capacitor/browser';
 
 export type BrowserPage = {
   url: string;
@@ -73,42 +72,18 @@ export default function ZenithBrowser() {
     await Preferences.set({ key: 'browser_history', value: JSON.stringify(newHistory) });
   };
 
-  const navigateTo = async (url: string) => {
+  const navigateTo = (url: string) => {
     const finalUrl = (!url || url.trim() === '') ? INITIAL_URL : url;
 
-    // Detect if the URL is external
-    const isExternal = finalUrl.startsWith('http') || finalUrl.includes('.');
-    const isInternal = finalUrl.startsWith('zenith://');
-
-    if (isExternal && !isInternal) {
-      // Use native browser for external sites to bypass iframe blocks
-      try {
-        await Browser.open({ url: finalUrl });
-        
-        // Still add to history for the Zenith UI
-        const newHistoryItem: BrowserPage = {
-          url: finalUrl,
-          title: finalUrl.replace(/(^\w+:|^)\/\//, ''),
-          timestamp: Date.now()
-        };
-        setHistory(prev => {
-          const updated = [newHistoryItem, ...prev.slice(0, 99)];
-          saveHistory(updated);
-          return updated;
-        });
-      } catch (err) {
-        console.error("Native browser failed", err);
-      }
-      return;
-    }
-    
-    // Internal navigation within the Next.js shell
+    // We do NOT use Browser.open here anymore. 
+    // All navigation updates the Viewport, which handles the rendering strategy.
     setTabs(prev => prev.map(tab => 
       tab.id === activeTabId 
         ? { ...tab, url: finalUrl, isLoading: true, title: finalUrl.startsWith('zenith://') ? 'Zenith Home' : finalUrl } 
         : tab
     ));
 
+    // Simulation of network request
     setTimeout(() => {
       setTabs(prev => prev.map(tab => 
         tab.id === activeTabId ? { ...tab, isLoading: false } : tab

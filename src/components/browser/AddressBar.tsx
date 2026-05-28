@@ -24,7 +24,7 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
     const query = inputValue.trim();
     if (!query) return;
 
-    // Basic URL detection
+    // Basic URL detection: If it has a TLD or starts with http, it's a URL
     const isUrl = /^(https?:\/\/)/.test(query) || 
                  (/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+/.test(query) && !query.includes(' '));
 
@@ -35,7 +35,7 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
       }
       onNavigate(url);
     } else {
-      // Direct DuckDuckGo HTML for iframe compatibility
+      // Use DuckDuckGo HTML for maximum iframe compatibility inside our UI
       onNavigate(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`);
     }
   };
