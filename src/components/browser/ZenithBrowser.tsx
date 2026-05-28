@@ -10,6 +10,7 @@ import TabStrip from './TabStrip';
 import AIInsightPanel from './AIInsightPanel';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Preferences } from '@capacitor/preferences';
+import { Browser } from '@capacitor/browser';
 
 export type BrowserPage = {
   url: string;
@@ -57,7 +58,6 @@ export default function ZenithBrowser() {
     if (bookData.value) {
       setBookmarks(JSON.parse(bookData.value));
     } else {
-      // Default bookmarks if none exist
       const defaults = [
         { id: '1', url: 'https://news.ycombinator.com', title: 'Hacker News', category: 'Tech', icon: 'Terminal' },
         { id: '2', url: 'https://vercel.com', title: 'Vercel', category: 'Dev', icon: 'Triangle' },
@@ -73,9 +73,36 @@ export default function ZenithBrowser() {
     await Preferences.set({ key: 'browser_history', value: JSON.stringify(newHistory) });
   };
 
-  const navigateTo = (url: string) => {
+  const navigateTo = async (url: string) => {
     const finalUrl = (!url || url.trim() === '') ? INITIAL_URL : url;
+
+    // Detect if the URL is external
+    const isExternal = finalUrl.startsWith('http') || finalUrl.includes('.');
+    const isInternal = finalUrl.startsWith('zenith://');
+
+    if (isExternal && !isInternal) {
+      // Use native browser for external sites to bypass iframe blocks
+      try {
+        await Browser.open({ url: finalUrl });
+        
+        // Still add to history for the Zenith UI
+        const newHistoryItem: BrowserPage = {
+          url: finalUrl,
+          title: finalUrl.replace(/(^\w+:|^)\/\//, ''),
+          timestamp: Date.now()
+        };
+        setHistory(prev => {
+          const updated = [newHistoryItem, ...prev.slice(0, 99)];
+          saveHistory(updated);
+          return updated;
+        });
+      } catch (err) {
+        console.error("Native browser failed", err);
+      }
+      return;
+    }
     
+    // Internal navigation within the Next.js shell
     setTabs(prev => prev.map(tab => 
       tab.id === activeTabId 
         ? { ...tab, url: finalUrl, isLoading: true, title: finalUrl.startsWith('zenith://') ? 'Zenith Home' : finalUrl } 
@@ -87,7 +114,6 @@ export default function ZenithBrowser() {
         tab.id === activeTabId ? { ...tab, isLoading: false } : tab
       ));
 
-      // Add to history
       const newHistoryItem: BrowserPage = {
         url: finalUrl,
         title: finalUrl.startsWith('zenith://') ? 'Zenith Home' : finalUrl.replace(/(^\w+:|^)\/\//, ''),
@@ -99,7 +125,7 @@ export default function ZenithBrowser() {
         saveHistory(updated);
         return updated;
       });
-    }, 600);
+    }, 400);
   };
 
   const openNewTab = (url: string = INITIAL_URL) => {
