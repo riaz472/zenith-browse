@@ -78,28 +78,30 @@ export default function ZenithBrowser() {
   const navigateTo = (url: string) => {
     const finalUrl = (!url || url.trim() === '') ? INITIAL_URL : url;
 
-    // External URLs open immediately in a new tab — no intermediate screen
-    if (!finalUrl.startsWith('zenith://')) {
-      window.open(finalUrl, '_blank', 'noopener,noreferrer');
-
-      const newHistoryItem: BrowserPage = {
-        url: finalUrl,
-        title: finalUrl.replace(/(^\w+:|^)\/\//, '').split('/')[0],
-        timestamp: Date.now()
-      };
-      setHistory(prev => {
-        const updated = [newHistoryItem, ...prev.slice(0, 99)];
-        saveHistory(updated);
-        return updated;
-      });
-      return;
-    }
-
     setTabs(prev => prev.map(tab =>
       tab.id === activeTabId
-        ? { ...tab, url: finalUrl, isLoading: false, title: 'Zenith Home' }
+        ? { ...tab, url: finalUrl, isLoading: true, title: finalUrl.startsWith('zenith://') ? 'Zenith Home' : new URL(finalUrl.startsWith('http') ? finalUrl : `https://${finalUrl}`).hostname }
         : tab
     ));
+
+    setTimeout(() => {
+      setTabs(prev => prev.map(tab =>
+        tab.id === activeTabId ? { ...tab, isLoading: false } : tab
+      ));
+
+      if (!finalUrl.startsWith('zenith://')) {
+        const newHistoryItem: BrowserPage = {
+          url: finalUrl,
+          title: finalUrl.replace(/(^\w+:|^)\/\//, '').split('/')[0],
+          timestamp: Date.now()
+        };
+        setHistory(prev => {
+          const updated = [newHistoryItem, ...prev.slice(0, 99)];
+          saveHistory(updated);
+          return updated;
+        });
+      }
+    }, 300);
   };
 
   const openNewTab = (url: string = INITIAL_URL) => {

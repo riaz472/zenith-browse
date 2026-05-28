@@ -30,7 +30,8 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
       }
       onNavigate(url);
     } else {
-      onNavigate(`https://duckduckgo.com/?q=${encodeURIComponent(query)}`);
+      // Use DuckDuckGo Lite — it allows in-app embedding unlike the full site
+      onNavigate(`https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`);
     }
   };
 

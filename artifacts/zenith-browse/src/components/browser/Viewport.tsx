@@ -1,18 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Compass,
-  ShieldCheck,
-  Globe,
-  AlertCircle,
-  Youtube,
-  Github,
-  Facebook,
-  BookOpen,
-  ArrowRight,
-  Zap,
-  ExternalLink,
-  Search
+  Compass, ShieldCheck, Globe, Youtube, Github,
+  Facebook, BookOpen, Zap, ExternalLink, RefreshCw,
+  ShieldAlert, Wifi
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -32,22 +23,61 @@ const SPEED_DIAL = [
   { name: 'Hacker News', url: 'https://news.ycombinator.com', icon: Zap, color: 'text-orange-500' },
 ];
 
+// Sites known to block iframes — show a nice blocked message instead of blank
+const BLOCKED_HOSTS = [
+  'google.com', 'www.google.com', 'youtube.com', 'www.youtube.com',
+  'facebook.com', 'www.facebook.com', 'twitter.com', 'www.twitter.com',
+  'x.com', 'www.x.com', 'instagram.com', 'www.instagram.com',
+  'linkedin.com', 'www.linkedin.com', 'reddit.com', 'www.reddit.com',
+  'github.com', 'www.github.com', 'vercel.com', 'www.vercel.com',
+  'openai.com', 'www.openai.com', 'netflix.com', 'www.netflix.com',
+];
+
+function isKnownBlocked(url: string): boolean {
+  try {
+    const host = new URL(url).hostname;
+    return BLOCKED_HOSTS.includes(host);
+  } catch {
+    return false;
+  }
+}
+
 export default function Viewport({ currentUrl, isLoading, onNavigate }: ViewportProps) {
-  const isInternal = currentUrl === 'zenith://welcome' || !currentUrl;
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
-  const urlObj = useMemo(() => {
-    try {
-      if (isInternal) return null;
-      return new URL(currentUrl);
-    } catch {
-      return null;
-    }
-  }, [currentUrl, isInternal]);
+  const isHome = currentUrl === 'zenith://welcome' || !currentUrl;
+  const showIframe = !isHome && !isLoading;
 
-  const handleNativeLaunch = () => {
-    if (currentUrl && currentUrl !== 'zenith://welcome') {
-      window.open(currentUrl, '_blank');
+  // Reset state on URL change
+  useEffect(() => {
+    setIframeLoaded(false);
+    setIsBlocked(false);
+
+    if (!isHome && !isLoading) {
+      const blocked = isKnownBlocked(currentUrl);
+      if (blocked) {
+        // Show blocked UI immediately for known sites
+        const t = setTimeout(() => setIsBlocked(true), 300);
+        return () => clearTimeout(t);
+      } else {
+        // For unknown sites, wait to see if iframe loads; if blank after 4s, show blocked
+        const t = setTimeout(() => {
+          setIsBlocked((prev) => !prev && !iframeLoaded);
+        }, 4000);
+        return () => clearTimeout(t);
+      }
     }
+  }, [currentUrl, isLoading, isHome]);
+
+  const handleIframeLoad = () => {
+    setIframeLoaded(true);
+    setIsBlocked(false);
+  };
+
+  const handleOpenExternal = () => {
+    window.open(currentUrl, '_blank', 'noopener,noreferrer');
   };
 
   if (isLoading) {
@@ -60,7 +90,7 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
           <motion.div
             className="absolute -inset-4 border border-accent/20 rounded-3xl"
             animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+            transition={{ repeat: Infinity, duration: 8, ease: 'linear' }}
           />
         </div>
         <div className="text-center space-y-2">
@@ -68,9 +98,9 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
           <div className="h-1 w-48 bg-white/5 rounded-full overflow-hidden mx-auto">
             <motion.div
               className="h-full bg-gradient-to-r from-primary to-accent"
-              initial={{ x: "-100%" }}
-              animate={{ x: "100%" }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+              initial={{ x: '-100%' }}
+              animate={{ x: '100%' }}
+              transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
             />
           </div>
         </div>
@@ -78,7 +108,7 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
     );
   }
 
-  if (isInternal) {
+  if (isHome) {
     return (
       <div className="flex-1 bg-[#07090D] p-8 md:p-16 overflow-y-auto scrollbar-hide">
         <div className="max-w-5xl mx-auto space-y-16">
@@ -90,7 +120,6 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
             >
               <Compass className="h-3 w-3" /> Zenith Native Engine v3.0.0
             </motion.div>
-
             <div className="space-y-2">
               <h1 className="text-7xl font-headline font-bold tracking-tighter text-white">
                 ZENITH <span className="text-primary italic">BROWSE</span>
@@ -108,7 +137,6 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
               </h2>
               <span className="text-[10px] font-medium text-white/30 uppercase tracking-widest">Instant Connect</span>
             </div>
-
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {SPEED_DIAL.map((site, i) => (
                 <motion.button
@@ -120,7 +148,7 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
                   className="flex flex-col items-center gap-3 p-6 rounded-2xl glass hover:bg-white/5 hover:border-primary/40 transition-all group"
                 >
                   <div className="h-14 w-14 rounded-xl bg-white/5 flex items-center justify-center group-hover:scale-110 group-hover:bg-primary/10 transition-all duration-300">
-                    <site.icon className={cn("h-7 w-7", site.color)} />
+                    <site.icon className={cn('h-7 w-7', site.color)} />
                   </div>
                   <span className="text-xs font-headline font-semibold tracking-tight text-foreground/80 group-hover:text-white transition-colors">
                     {site.name}
@@ -154,71 +182,102 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
     );
   }
 
+  // --- In-app iframe viewer ---
   return (
-    <div className="flex-1 bg-[#07090D] flex items-center justify-center p-8 relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden opacity-20">
-        <div className="absolute -top-1/2 -right-1/4 w-[100%] h-[100%] bg-primary/20 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute -bottom-1/2 -left-1/4 w-[100%] h-[100%] bg-accent/10 blur-[120px] rounded-full" />
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="max-w-lg w-full glass-dark p-10 rounded-[2.5rem] shadow-2xl space-y-8 text-center border-white/10 relative z-10"
-      >
-        <div className="relative inline-block">
-          <div className="h-20 w-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto border border-primary/20">
-            {currentUrl.includes('duckduckgo.com') ? (
-              <Search className="h-10 w-10 text-primary" />
-            ) : (
-              <ShieldCheck className="h-10 w-10 text-primary" />
-            )}
+    <div className="flex-1 flex flex-col bg-[#07090D] relative overflow-hidden">
+      {/* iframe loading shimmer */}
+      {!iframeLoaded && !isBlocked && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#07090D] space-y-4 pointer-events-none">
+          <div className="relative">
+            <div className="h-16 w-16 rounded-2xl border border-primary/20 bg-primary/5 flex items-center justify-center animate-pulse">
+              <Wifi className="h-7 w-7 text-primary" />
+            </div>
           </div>
-          <div className="absolute -top-2 -right-2 h-6 w-6 bg-accent rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(26,214,214,0.5)]">
-            <AlertCircle className="h-4 w-4 text-black" />
+          <p className="text-xs font-headline tracking-[0.25em] text-primary/70 uppercase">Loading…</p>
+        </div>
+      )}
+
+      {/* Blocked / embedding refused state */}
+      {isBlocked && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#07090D] p-8 space-y-6">
+          <div className="h-20 w-20 rounded-3xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+            <ShieldAlert className="h-10 w-10 text-orange-400" />
           </div>
-        </div>
-
-        <div className="space-y-3 relative z-10">
-          <h3 className="text-2xl font-headline font-bold text-white tracking-tight italic uppercase">
-            {currentUrl.includes('duckduckgo.com') ? 'Search Pipeline Ready' : 'Native Secure Port'}
-          </h3>
-          <p className="text-sm text-gray-400 leading-relaxed font-light px-4">
-            {currentUrl.includes('duckduckgo.com')
-             ? "Zenith is ready to initialize the secure search engine for your query."
-             : `Establishing a secure native bridge to ${urlObj?.hostname || 'the target destination'}.`
-            }
-          </p>
-        </div>
-
-        <div className="space-y-3 pt-4 relative z-10">
-          <Button
-            variant="default"
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-14 rounded-2xl font-headline font-bold tracking-tight text-lg shadow-[0_0_20px_rgba(71,163,245,0.3)] transition-all active:scale-95"
-            onClick={handleNativeLaunch}
-          >
-            Launch Secure Port
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-
-          <div className="flex gap-2">
+          <div className="text-center space-y-2 max-w-sm">
+            <h3 className="text-lg font-headline font-bold text-white tracking-tight">Site Blocks Embedding</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              This website doesn't allow being shown inside other apps — a common security policy used by major sites.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <Button
+              className="w-full h-12 bg-primary text-primary-foreground font-headline font-bold rounded-2xl gap-2"
+              onClick={handleOpenExternal}
+            >
+              <ExternalLink className="h-4 w-4" />
+              Open in Browser
+            </Button>
             <Button
               variant="ghost"
-              className="flex-1 text-muted-foreground hover:text-white hover:bg-white/5 font-headline font-bold text-[10px] uppercase tracking-widest h-10"
+              className="w-full h-10 text-muted-foreground hover:text-white font-headline font-bold text-xs uppercase tracking-widest gap-2"
               onClick={() => onNavigate('zenith://welcome')}
             >
-              Home Hub
-            </Button>
-            <Button
-              variant="ghost"
-              className="flex-1 text-muted-foreground hover:text-white hover:bg-white/5 font-headline font-bold text-[10px] uppercase tracking-widest h-10 gap-2"
-              onClick={() => window.open(currentUrl, '_blank')}
-            >
-              <ExternalLink className="h-3 w-3" /> External
+              ← Back to Home
             </Button>
           </div>
         </div>
-      </motion.div>
+      )}
+
+      {/* The actual iframe */}
+      {showIframe && (
+        <iframe
+          ref={iframeRef}
+          key={currentUrl}
+          src={currentUrl}
+          className={cn(
+            'flex-1 w-full h-full border-0 transition-opacity duration-300',
+            iframeLoaded && !isBlocked ? 'opacity-100' : 'opacity-0'
+          )}
+          onLoad={handleIframeLoad}
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+          title="Zenith Browser Viewport"
+          referrerPolicy="no-referrer"
+        />
+      )}
+
+      {/* Bottom bar when page is loaded — quick actions */}
+      {iframeLoaded && !isBlocked && (
+        <motion.div
+          initial={{ y: 40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="absolute bottom-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-2 bg-[#07090D]/90 border-t border-white/5 backdrop-blur-sm"
+        >
+          <span className="text-[10px] text-muted-foreground font-mono truncate max-w-[60%]">{currentUrl}</span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-white"
+              title="Reload"
+              onClick={() => {
+                setIframeLoaded(false);
+                if (iframeRef.current) iframeRef.current.src = currentUrl;
+              }}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-white"
+              title="Open in Browser"
+              onClick={handleOpenExternal}
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
