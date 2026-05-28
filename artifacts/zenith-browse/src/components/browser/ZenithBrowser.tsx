@@ -78,29 +78,28 @@ export default function ZenithBrowser() {
   const navigateTo = (url: string) => {
     const finalUrl = (!url || url.trim() === '') ? INITIAL_URL : url;
 
-    setTabs(prev => prev.map(tab =>
-      tab.id === activeTabId
-        ? { ...tab, url: finalUrl, isLoading: true, title: finalUrl.startsWith('zenith://') ? 'Zenith Home' : finalUrl }
-        : tab
-    ));
-
-    setTimeout(() => {
-      setTabs(prev => prev.map(tab =>
-        tab.id === activeTabId ? { ...tab, isLoading: false } : tab
-      ));
+    // External URLs open immediately in a new tab — no intermediate screen
+    if (!finalUrl.startsWith('zenith://')) {
+      window.open(finalUrl, '_blank', 'noopener,noreferrer');
 
       const newHistoryItem: BrowserPage = {
         url: finalUrl,
-        title: finalUrl.startsWith('zenith://') ? 'Zenith Home' : finalUrl.replace(/(^\w+:|^)\/\//, ''),
+        title: finalUrl.replace(/(^\w+:|^)\/\//, '').split('/')[0],
         timestamp: Date.now()
       };
-
       setHistory(prev => {
         const updated = [newHistoryItem, ...prev.slice(0, 99)];
         saveHistory(updated);
         return updated;
       });
-    }, 400);
+      return;
+    }
+
+    setTabs(prev => prev.map(tab =>
+      tab.id === activeTabId
+        ? { ...tab, url: finalUrl, isLoading: false, title: 'Zenith Home' }
+        : tab
+    ));
   };
 
   const openNewTab = (url: string = INITIAL_URL) => {
