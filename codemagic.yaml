@@ -11,10 +11,8 @@ workflows:
         script: npm install
       - name: Next.js Static Export Build
         script: npm run build
-      - name: Add Android Platform
-        script: npx @capacitor/cli add android
       - name: Sync Web Assets to Android
-        script: npx @capacitor/cli sync android
+        script: npx @capacitor/cli sync
       - name: Build Android Debug APK
         script: |
           cd android
