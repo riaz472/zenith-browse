@@ -1,0 +1,29 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "tech-news",
+      "description": "Tech news website banner",
+      "imageUrl": "https://picsum.photos/seed/tech/800/400",
+      "imageHint": "tech news"
+    },
+    {
+      "id": "science-journal",
+      "description": "Science journal homepage",
+      "imageUrl": "https://picsum.photos/seed/science/800/400",
+      "imageHint": "science space"
+    },
+    {
+      "id": "design-portfolio",
+      "description": "Modern design portfolio",
+      "imageUrl": "https://picsum.photos/seed/design/800/400",
+      "imageHint": "modern design"
+    },
+    {
+      "id": "coding-blog",
+      "description": "Developer blog interface",
+      "imageUrl": "https://picsum.photos/seed/code/800/400",
+      "imageHint": "coding programming"
+    }
+  ]
+}
