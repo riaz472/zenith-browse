@@ -9,7 +9,7 @@ workflows:
       - name: Install dependencies
         script: npm install
       - name: Next.js Static Export Build
-         script: npm run build
+        script: npm run build
       - name: Initialize Capacitor and Android Platform
         script: |
           npx cap init "Zenith Browse" "com.riaz.zenithbrowse" --web-dir=out
