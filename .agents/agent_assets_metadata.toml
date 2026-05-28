@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "pg09XMZtYBiM6_f3r_O75"
+uri = "file://artifacts/zenith-browse-mobile/assets/images/icon.png"
+type = "image"
+title = "generated_image"

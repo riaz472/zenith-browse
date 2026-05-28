@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/mobile/"
+title = "Zenith Browse Mobile"
+version = "1.0.0"
+id = "artifacts/zenith-browse-mobile"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/mobile/" ]
+localPort = 20702
+
+[services.development]
+run = "pnpm --filter @workspace/zenith-browse-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/zenith-browse-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/zenith-browse-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "20702"
+BASE_PATH = "/mobile/"
