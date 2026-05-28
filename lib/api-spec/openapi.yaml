@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: insight
+    description: AI page analysis operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /insight:
+    post:
+      operationId: analyzePageInsight
+      tags: [insight]
+      summary: Analyze a web page with AI
+      description: >
+        Fetches the given URL, extracts readable text, and streams an AI-generated
+        summary and key takeaways as Server-Sent Events (text/event-stream).
+        Each SSE event carries a JSON payload with one of: `content` (streamed
+        token), `done` + `full` (final accumulated text), or `error` (failure message).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InsightRequest"
+      responses:
+        "200":
+          description: SSE stream of AI insight tokens
+          content:
+            text/event-stream:
+              schema:
+                $ref: "#/components/schemas/InsightStreamEvent"
+        "400":
+          description: Missing or invalid URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Server or AI error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +70,43 @@ components:
           type: string
       required:
         - status
-
+    InsightRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: The public web page URL to analyze
+      required:
+        - url
+    InsightStreamEvent:
+      type: object
+      description: >
+        One of three mutually exclusive shapes streamed as SSE data payloads.
+      oneOf:
+        - type: object
+          properties:
+            content:
+              type: string
+              description: Incremental AI token
+          required: [content]
+        - type: object
+          properties:
+            done:
+              type: boolean
+            full:
+              type: string
+              description: Complete accumulated AI response text
+          required: [done, full]
+        - type: object
+          properties:
+            error:
+              type: string
+          required: [error]
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
