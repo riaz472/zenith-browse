@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Zenith Browse"
+version = "1.0.0"
+id = "artifacts/zenith-browse"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25982
+
+[services.development]
+run = "pnpm --filter @workspace/zenith-browse run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/zenith-browse", "run", "build" ]
+publicDir = "artifacts/zenith-browse/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25982"
+BASE_PATH = "/"

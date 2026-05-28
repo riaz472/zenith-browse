@@ -1,36 +1,39 @@
-# [Project name]
+# Zenith Browse
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+An AI-powered browser UI with tabbed navigation, a collapsible sidebar, speed dial, and an AI insight panel.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/zenith-browse run dev` — run the frontend (Vite, auto-assigned port)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: none for frontend-only mode
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Frontend: React 19 + Vite + Tailwind CSS v4
+- UI: shadcn/ui + Radix UI primitives + framer-motion
+- Fonts: Space Grotesk (headline) + Inter (body) via Google Fonts
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/zenith-browse/` — the main frontend app
+- `artifacts/zenith-browse/src/components/browser/` — core browser UI components
+- `artifacts/zenith-browse/src/index.css` — Zenith dark theme (CSS variables)
+- `artifacts/api-server/` — scaffolded Express API (not used by default)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Purely frontend — no backend needed. History and bookmarks stored in localStorage.
+- Capacitor plugins replaced with Web APIs (localStorage, navigator.share, window.open).
+- `next/image`, `next/link`, and all Next.js patterns removed; app is now a single-page Vite + React app.
+- Dark mode always-on via `class="dark"` on `<body>` in index.html.
+- Tailwind v4 with CSS variable-based theming.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Zenith Browse is a browser-in-a-browser UI — a concept browser with tabs, a collapsible bookmarks/history sidebar, a DuckDuckGo search-powered address bar, and an AI Insight panel that synthesizes the current URL.
 
 ## User preferences
 
@@ -38,7 +41,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Do not run `pnpm dev` at workspace root — run it via `pnpm --filter @workspace/zenith-browse run dev` or use the Replit workflow.
+- Capacitor packages are NOT in the package.json; they were removed during migration. Do not re-add them.
 
 ## Pointers
 
