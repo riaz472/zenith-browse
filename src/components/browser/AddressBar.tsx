@@ -2,10 +2,11 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Search, Shield, ArrowLeft, ArrowRight, RotateCcw, Sparkles, Globe } from 'lucide-react';
+import { Search, Shield, ArrowLeft, ArrowRight, RotateCcw, Sparkles, Globe, Share2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Share } from '@capacitor/share';
 
 interface AddressBarProps {
   currentUrl: string;
@@ -23,7 +24,7 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
     const query = inputValue.trim();
     if (!query) return;
 
-    // Basic URL detection: starts with protocol or has a TLD-like structure with no spaces
+    // Basic URL detection
     const isUrl = /^(https?:\/\/)/.test(query) || 
                  (/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+/.test(query) && !query.includes(' '));
 
@@ -34,14 +35,26 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
       }
       onNavigate(url);
     } else {
-      // Use DuckDuckGo HTML version which is much more iframe friendly than Google
+      // Direct DuckDuckGo HTML for iframe compatibility
       onNavigate(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`);
     }
   };
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        title: 'Zenith Browse',
+        text: 'Check out this site!',
+        url: currentUrl,
+        dialogTitle: 'Share this link',
+      });
+    } catch (err) {
+      console.log('Sharing failed', err);
+    }
+  };
+
   React.useEffect(() => {
-    // Sync input with the actual URL when it changes externally
-    setInputValue(currentUrl);
+    setInputValue(currentUrl === 'zenith://welcome' ? '' : currentUrl);
   }, [currentUrl]);
 
   return (
@@ -69,29 +82,31 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
         </div>
         <Input 
           className={cn(
-            "w-full bg-secondary/50 border-white/5 pl-14 pr-10 py-1.5 h-10 transition-all focus:ring-primary focus:bg-secondary",
-            isAiActive && "animate-micro-pulse border-accent/30 shadow-[0_0_15px_rgba(26,214,214,0.1)]"
+            "w-full bg-secondary/30 border-white/5 pl-14 pr-10 py-1.5 h-10 transition-all focus:ring-primary focus:bg-secondary",
+            isAiActive && "animate-micro-pulse border-accent/30"
           )}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Enter URL or Search Zenith..."
+          placeholder="Search or enter address"
         />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
-          <span className="text-[10px] font-headline font-bold uppercase tracking-widest text-muted-foreground/50 border border-white/10 rounded px-1.5 py-0.5">SECURE</span>
-        </div>
       </form>
 
-      <Button 
-        onClick={onToggleAi}
-        variant={isAiActive ? "default" : "outline"} 
-        className={cn(
-          "h-10 gap-2 font-headline font-semibold px-4 transition-all duration-500",
-          isAiActive ? "bg-accent text-accent-foreground border-accent shadow-[0_0_20px_rgba(26,214,214,0.3)] hover:bg-accent/90" : "border-white/10 hover:border-primary/50"
-        )}
-      >
-        <Sparkles className={cn("h-4 w-4", isAiActive && "animate-pulse")} />
-        AI INSIGHT
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button onClick={handleShare} variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-foreground">
+          <Share2 className="h-4 w-4" />
+        </Button>
+        <Button 
+          onClick={onToggleAi}
+          variant={isAiActive ? "default" : "outline"} 
+          className={cn(
+            "h-10 gap-2 font-headline font-semibold px-4 transition-all duration-500 hidden sm:flex",
+            isAiActive ? "bg-accent text-accent-foreground border-accent" : "border-white/10"
+          )}
+        >
+          <Sparkles className={cn("h-4 w-4", isAiActive && "animate-pulse")} />
+          INSIGHT
+        </Button>
+      </div>
     </header>
   );
 }
