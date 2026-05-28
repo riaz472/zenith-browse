@@ -14,7 +14,8 @@ import {
   BookOpen,
   ArrowRight,
   Zap,
-  ExternalLink
+  ExternalLink,
+  Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -37,7 +38,6 @@ const SPEED_DIAL = [
 
 export default function Viewport({ currentUrl, isLoading, onNavigate }: ViewportProps) {
   const isInternal = currentUrl === 'zenith://welcome' || !currentUrl;
-  const isSearch = currentUrl.includes('duckduckgo.com/html');
   
   const urlObj = useMemo(() => {
     try {
@@ -49,8 +49,12 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
   }, [currentUrl, isInternal]);
 
   const handleNativeLaunch = async () => {
-    if (currentUrl) {
-      await Browser.open({ url: currentUrl });
+    if (currentUrl && currentUrl !== 'zenith://welcome') {
+      try {
+        await Browser.open({ url: currentUrl });
+      } catch (error) {
+        console.error("Native browser failed to open:", error);
+      }
     }
   };
 
@@ -158,35 +162,28 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
     );
   }
 
-  // Use iframe for Search Results (DuckDuckGo HTML is generally iframe-friendly)
-  if (isSearch) {
-    return (
-      <div className="flex-1 bg-white relative">
-        <iframe 
-          src={currentUrl} 
-          className="w-full h-full border-none"
-          title="Search Results"
-        />
-        {/* Loading Overlay */}
-        {isLoading && (
-          <div className="absolute inset-0 bg-[#07090D] flex items-center justify-center z-50">
-             <Zap className="h-10 w-10 text-primary animate-pulse" />
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Fallback for External Sites that block iframes
+  // Fallback for External Sites & Search Results
+  // This UI serves as the bridge to the Native Browser Plugin
   return (
-    <div className="flex-1 bg-[#07090D] flex items-center justify-center p-8">
-      <div className="max-w-md w-full glass-dark p-10 rounded-[2.5rem] shadow-2xl space-y-8 text-center border-white/10 relative overflow-hidden">
-         <div className="absolute -top-24 -right-24 h-48 w-48 bg-primary/20 blur-[80px] rounded-full" />
-         <div className="absolute -bottom-24 -left-24 h-48 w-48 bg-accent/20 blur-[80px] rounded-full" />
+    <div className="flex-1 bg-[#07090D] flex items-center justify-center p-8 relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden opacity-20">
+        <div className="absolute -top-1/2 -right-1/4 w-[100%] h-[100%] bg-primary/20 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute -bottom-1/2 -left-1/4 w-[100%] h-[100%] bg-accent/10 blur-[120px] rounded-full" />
+      </div>
 
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-lg w-full glass-dark p-10 rounded-[2.5rem] shadow-2xl space-y-8 text-center border-white/10 relative z-10"
+      >
          <div className="relative inline-block">
            <div className="h-20 w-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto border border-primary/20">
-             <ShieldCheck className="h-10 w-10 text-primary" />
+             {currentUrl.includes('duckduckgo.com') ? (
+               <Search className="h-10 w-10 text-primary" />
+             ) : (
+               <ShieldCheck className="h-10 w-10 text-primary" />
+             )}
            </div>
            <div className="absolute -top-2 -right-2 h-6 w-6 bg-accent rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(26,214,214,0.5)]">
              <AlertCircle className="h-4 w-4 text-black" />
@@ -194,9 +191,14 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
          </div>
          
          <div className="space-y-3 relative z-10">
-           <h3 className="text-2xl font-headline font-bold text-white tracking-tight italic uppercase">Native Secure Port</h3>
+           <h3 className="text-2xl font-headline font-bold text-white tracking-tight italic uppercase">
+             {currentUrl.includes('duckduckgo.com') ? 'Search Pipeline Ready' : 'Native Secure Port'}
+           </h3>
            <p className="text-sm text-gray-400 leading-relaxed font-light px-4">
-             Zenith is preparing a native system bridge to launch <span className="text-primary font-bold">{urlObj?.hostname || 'Target Site'}</span>. This bypasses web security headers.
+             {currentUrl.includes('duckduckgo.com') 
+              ? "Zenith is ready to initialize the secure search engine for your query."
+              : `Establishing a secure native bridge to ${urlObj?.hostname || 'the target destination'}.`
+             }
            </p>
          </div>
 
@@ -209,6 +211,7 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
              Launch Secure Port
              <ArrowRight className="ml-2 h-5 w-5" />
            </Button>
+           
            <div className="flex gap-2">
              <Button 
                variant="ghost" 
@@ -226,7 +229,7 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
              </Button>
            </div>
          </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

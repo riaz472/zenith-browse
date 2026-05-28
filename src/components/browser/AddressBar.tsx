@@ -24,7 +24,7 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
     const query = inputValue.trim();
     if (!query) return;
 
-    // Basic URL detection: If it has a TLD or starts with http, it's a URL
+    // Basic URL detection
     const isUrl = /^(https?:\/\/)/.test(query) || 
                  (/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+/.test(query) && !query.includes(' '));
 
@@ -35,19 +35,21 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
       }
       onNavigate(url);
     } else {
-      // Use DuckDuckGo HTML for maximum iframe compatibility inside our UI
-      onNavigate(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`);
+      // Use DuckDuckGo for searches
+      onNavigate(`https://duckduckgo.com/?q=${encodeURIComponent(query)}`);
     }
   };
 
   const handleShare = async () => {
     try {
-      await Share.share({
-        title: 'Zenith Browse',
-        text: 'Check out this site!',
-        url: currentUrl,
-        dialogTitle: 'Share this link',
-      });
+      if (currentUrl && currentUrl !== 'zenith://welcome') {
+        await Share.share({
+          title: 'Zenith Browse',
+          text: 'Check out this site!',
+          url: currentUrl,
+          dialogTitle: 'Share this link',
+        });
+      }
     } catch (err) {
       console.log('Sharing failed', err);
     }
