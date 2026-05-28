@@ -7,15 +7,13 @@ workflows:
       node: latest
     scripts:
       - name: Install dependencies
-        script: |
-          npm install
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+        script: npm install
       - name: Next.js Static Export Build
         script: npm run build
-      - name: Initialize Capacitor and Android Platform
-        script: |
-          npx cap init "Zenith Browse" "com.riaz.zenithbrowse" --web-dir=out
-          npx cap add android
+      - name: Add Android Platform
+        script: npx cap add android
+      - name: Sync Web Assets to Android
+        script: npx cap sync android
       - name: Build Android Debug APK
         script: |
           cd android
