@@ -2,8 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Compass, ShieldCheck, Globe, Youtube, Github,
-  Facebook, BookOpen, Zap, ExternalLink, RefreshCw,
-  ShieldAlert, Wifi
+  Facebook, BookOpen, Zap, ExternalLink, RefreshCw, Wifi, AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -23,63 +22,51 @@ const SPEED_DIAL = [
   { name: 'Hacker News', url: 'https://news.ycombinator.com', icon: Zap, color: 'text-orange-500' },
 ];
 
-// Sites known to block iframes — show a nice blocked message instead of blank
-const BLOCKED_HOSTS = [
-  'google.com', 'www.google.com', 'youtube.com', 'www.youtube.com',
-  'facebook.com', 'www.facebook.com', 'twitter.com', 'www.twitter.com',
-  'x.com', 'www.x.com', 'instagram.com', 'www.instagram.com',
-  'linkedin.com', 'www.linkedin.com', 'reddit.com', 'www.reddit.com',
-  'github.com', 'www.github.com', 'vercel.com', 'www.vercel.com',
-  'openai.com', 'www.openai.com', 'netflix.com', 'www.netflix.com',
-];
-
-function isKnownBlocked(url: string): boolean {
-  try {
-    const host = new URL(url).hostname;
-    return BLOCKED_HOSTS.includes(host);
-  } catch {
-    return false;
-  }
+// Build the proxy URL for a given target — routes through our Vite middleware
+// which fetches server-side and strips X-Frame-Options headers.
+function proxyUrl(target: string): string {
+  const base = import.meta.env.BASE_URL ?? '/';
+  // BASE_URL ends with '/', so trim the trailing slash before appending
+  const proxyPath = base.replace(/\/$/, '') + '/zenith-proxy';
+  return `${proxyPath}?url=${encodeURIComponent(target)}`;
 }
 
 export default function Viewport({ currentUrl, isLoading, onNavigate }: ViewportProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeLoaded, setIframeLoaded] = useState(false);
-  const [isBlocked, setIsBlocked] = useState(false);
+  const [proxyFailed, setProxyFailed] = useState(false);
 
   const isHome = currentUrl === 'zenith://welcome' || !currentUrl;
   const showIframe = !isHome && !isLoading;
+  const iframeSrc = showIframe ? proxyUrl(currentUrl) : '';
 
-  // Reset state on URL change
+  // Reset on every URL change
   useEffect(() => {
     setIframeLoaded(false);
-    setIsBlocked(false);
-
-    if (!isHome && !isLoading) {
-      const blocked = isKnownBlocked(currentUrl);
-      if (blocked) {
-        // Show blocked UI immediately for known sites
-        const t = setTimeout(() => setIsBlocked(true), 300);
-        return () => clearTimeout(t);
-      } else {
-        // For unknown sites, wait to see if iframe loads; if blank after 4s, show blocked
-        const t = setTimeout(() => {
-          setIsBlocked((prev) => !prev && !iframeLoaded);
-        }, 4000);
-        return () => clearTimeout(t);
-      }
-    }
-  }, [currentUrl, isLoading, isHome]);
+    setProxyFailed(false);
+  }, [currentUrl]);
 
   const handleIframeLoad = () => {
     setIframeLoaded(true);
-    setIsBlocked(false);
+  };
+
+  const handleIframeError = () => {
+    setProxyFailed(true);
   };
 
   const handleOpenExternal = () => {
     window.open(currentUrl, '_blank', 'noopener,noreferrer');
   };
 
+  const handleReload = () => {
+    setIframeLoaded(false);
+    setProxyFailed(false);
+    if (iframeRef.current) {
+      iframeRef.current.src = proxyUrl(currentUrl);
+    }
+  };
+
+  // ── Loading screen ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="flex-1 bg-[#07090D] flex flex-col items-center justify-center space-y-6">
@@ -108,6 +95,7 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
     );
   }
 
+  // ── Home / new tab screen ───────────────────────────────────────────────────
   if (isHome) {
     return (
       <div className="flex-1 bg-[#07090D] p-8 md:p-16 overflow-y-auto scrollbar-hide">
@@ -182,71 +170,65 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
     );
   }
 
-  // --- In-app iframe viewer ---
+  // ── In-app iframe viewer ────────────────────────────────────────────────────
   return (
     <div className="flex-1 flex flex-col bg-[#07090D] relative overflow-hidden">
-      {/* iframe loading shimmer */}
-      {!iframeLoaded && !isBlocked && (
+
+      {/* Shimmer while loading */}
+      {!iframeLoaded && !proxyFailed && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#07090D] space-y-4 pointer-events-none">
-          <div className="relative">
-            <div className="h-16 w-16 rounded-2xl border border-primary/20 bg-primary/5 flex items-center justify-center animate-pulse">
-              <Wifi className="h-7 w-7 text-primary" />
-            </div>
+          <div className="h-16 w-16 rounded-2xl border border-primary/20 bg-primary/5 flex items-center justify-center animate-pulse">
+            <Wifi className="h-7 w-7 text-primary" />
           </div>
           <p className="text-xs font-headline tracking-[0.25em] text-primary/70 uppercase">Loading…</p>
         </div>
       )}
 
-      {/* Blocked / embedding refused state */}
-      {isBlocked && (
+      {/* Proxy / network error */}
+      {proxyFailed && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#07090D] p-8 space-y-6">
-          <div className="h-20 w-20 rounded-3xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-            <ShieldAlert className="h-10 w-10 text-orange-400" />
+          <div className="h-20 w-20 rounded-3xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center">
+            <AlertTriangle className="h-10 w-10 text-yellow-400" />
           </div>
           <div className="text-center space-y-2 max-w-sm">
-            <h3 className="text-lg font-headline font-bold text-white tracking-tight">Site Blocks Embedding</h3>
+            <h3 className="text-lg font-headline font-bold text-white tracking-tight">Couldn't Load Page</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              This website doesn't allow being shown inside other apps — a common security policy used by major sites.
+              The page could not be fetched. Check the address or try opening it in a browser.
             </p>
           </div>
           <div className="flex flex-col gap-3 w-full max-w-xs">
-            <Button
-              className="w-full h-12 bg-primary text-primary-foreground font-headline font-bold rounded-2xl gap-2"
-              onClick={handleOpenExternal}
-            >
-              <ExternalLink className="h-4 w-4" />
-              Open in Browser
+            <Button className="w-full h-12 bg-primary text-primary-foreground font-headline font-bold rounded-2xl gap-2" onClick={handleReload}>
+              <RefreshCw className="h-4 w-4" /> Try Again
             </Button>
-            <Button
-              variant="ghost"
-              className="w-full h-10 text-muted-foreground hover:text-white font-headline font-bold text-xs uppercase tracking-widest gap-2"
-              onClick={() => onNavigate('zenith://welcome')}
-            >
+            <Button className="w-full h-12 bg-primary/10 border border-primary/30 text-primary font-headline font-bold rounded-2xl gap-2" onClick={handleOpenExternal}>
+              <ExternalLink className="h-4 w-4" /> Open in Browser
+            </Button>
+            <Button variant="ghost" className="w-full h-10 text-muted-foreground hover:text-white font-headline font-bold text-xs uppercase tracking-widest" onClick={() => onNavigate('zenith://welcome')}>
               ← Back to Home
             </Button>
           </div>
         </div>
       )}
 
-      {/* The actual iframe */}
+      {/* The proxied iframe — loaded through /zenith-proxy to strip X-Frame-Options */}
       {showIframe && (
         <iframe
           ref={iframeRef}
-          key={currentUrl}
-          src={currentUrl}
+          key={iframeSrc}
+          src={iframeSrc}
           className={cn(
             'flex-1 w-full h-full border-0 transition-opacity duration-300',
-            iframeLoaded && !isBlocked ? 'opacity-100' : 'opacity-0'
+            iframeLoaded && !proxyFailed ? 'opacity-100' : 'opacity-0'
           )}
           onLoad={handleIframeLoad}
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+          onError={handleIframeError}
           title="Zenith Browser Viewport"
           referrerPolicy="no-referrer"
         />
       )}
 
-      {/* Bottom bar when page is loaded — quick actions */}
-      {iframeLoaded && !isBlocked && (
+      {/* Bottom toolbar — shown once page is loaded */}
+      {iframeLoaded && !proxyFailed && (
         <motion.div
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -254,25 +236,10 @@ export default function Viewport({ currentUrl, isLoading, onNavigate }: Viewport
         >
           <span className="text-[10px] text-muted-foreground font-mono truncate max-w-[60%]">{currentUrl}</span>
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-white"
-              title="Reload"
-              onClick={() => {
-                setIframeLoaded(false);
-                if (iframeRef.current) iframeRef.current.src = currentUrl;
-              }}
-            >
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-white" title="Reload" onClick={handleReload}>
               <RefreshCw className="h-3.5 w-3.5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-white"
-              title="Open in Browser"
-              onClick={handleOpenExternal}
-            >
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-white" title="Open in Browser" onClick={handleOpenExternal}>
               <ExternalLink className="h-3.5 w-3.5" />
             </Button>
           </div>
