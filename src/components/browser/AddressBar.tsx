@@ -34,8 +34,8 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
       }
       onNavigate(url);
     } else {
-      // Treat as search query
-      onNavigate(`zenith://search?q=${encodeURIComponent(query)}`);
+      // Treat as search query - Now automatically redirecting to live Google Search
+      onNavigate(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
     }
   };
 
