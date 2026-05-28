@@ -20,14 +20,26 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    let url = inputValue.trim();
-    if (!url.startsWith('http') && !url.includes('://')) {
-      url = `https://${url}`;
+    const query = inputValue.trim();
+    if (!query) return;
+
+    // Basic URL detection: starts with protocol or has a dot with no spaces
+    const isUrl = /^(https?:\/\/)/.test(query) || (query.includes('.') && !query.includes(' '));
+
+    if (isUrl) {
+      let url = query;
+      if (!url.startsWith('http') && !url.includes('://')) {
+        url = `https://${url}`;
+      }
+      onNavigate(url);
+    } else {
+      // Treat as search query
+      onNavigate(`zenith://search?q=${encodeURIComponent(query)}`);
     }
-    onNavigate(url);
   };
 
   React.useEffect(() => {
+    // Only update input if it's not currently being focused/edited by user to avoid jumping
     setInputValue(currentUrl);
   }, [currentUrl]);
 
@@ -48,7 +60,7 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
       <form onSubmit={handleSubmit} className="flex-1 relative group">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none text-muted-foreground">
           <Shield className="h-3.5 w-3.5 text-accent" />
-          <Globe className="h-4 w-4" />
+          <Search className="h-4 w-4" />
         </div>
         <Input 
           className={cn(
@@ -60,7 +72,7 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
           placeholder="Enter URL or Search Zenith..."
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
-          <span className="text-[10px] font-headline font-bold uppercase tracking-widest text-muted-foreground/50 border border-white/10 rounded px-1.5 py-0.5">HTTPS</span>
+          <span className="text-[10px] font-headline font-bold uppercase tracking-widest text-muted-foreground/50 border border-white/10 rounded px-1.5 py-0.5">SECURE</span>
         </div>
       </form>
 
