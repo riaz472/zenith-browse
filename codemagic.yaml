@@ -7,7 +7,9 @@ workflows:
       node: latest
     scripts:
       - name: Install dependencies
-        script: npm install
+        script: |
+          npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android
       - name: Next.js Static Export Build
         script: npm run build
       - name: Initialize Capacitor and Android Platform
