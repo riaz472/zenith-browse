@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -39,25 +38,29 @@ export default function ZenithBrowser() {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigateTo = (url: string) => {
+    if (!url || url.trim() === '') {
+      url = INITIAL_URL;
+    }
+    
     setIsLoading(true);
-    // Simulate loading delay
+    // Simulate loading delay for "Electric Speed" feel
     setTimeout(() => {
       setCurrentUrl(url);
       setIsLoading(false);
       // Add to history
       const newHistoryItem: BrowserPage = {
         url,
-        title: url.replace(/(^\w+:|^)\/\//, ''),
+        title: url.startsWith('zenith://') ? 'Zenith Home' : url.replace(/(^\w+:|^)\/\//, ''),
         content: `Content for ${url}... This is simulated web content for the browser demo.`,
         timestamp: Date.now()
       };
       setHistory(prev => [newHistoryItem, ...prev.slice(0, 49)]);
-    }, 400);
+    }, 600);
   };
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="flex h-screen w-full bg-background overflow-hidden">
+      <div className="flex h-screen w-full bg-[#07090D] text-foreground overflow-hidden">
         <SideNav 
           onNavigate={navigateTo} 
           history={history} 
@@ -75,7 +78,11 @@ export default function ZenithBrowser() {
           />
           
           <div className="flex-1 flex overflow-hidden">
-            <Viewport currentUrl={currentUrl} isLoading={isLoading} />
+            <Viewport 
+              currentUrl={currentUrl} 
+              isLoading={isLoading} 
+              onNavigate={navigateTo}
+            />
             
             <AnimatePresence>
               {isAiPanelOpen && (
