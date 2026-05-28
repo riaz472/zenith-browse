@@ -1,6 +1,4 @@
-git add .
-git commit -m "Added complete native android project folder"
-git push origin main# Firebase Studio
+# Firebase Studio
 
 This is a NextJS starter in Firebase Studio.
 
