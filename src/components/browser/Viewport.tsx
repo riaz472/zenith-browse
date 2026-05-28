@@ -3,7 +3,7 @@
 
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Layout, Compass, Info, ShieldCheck, Search, ExternalLink, Sparkles, Globe, AlertCircle } from 'lucide-react';
+import { Layout, Compass, Info, ShieldCheck, ExternalLink, Globe, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -24,12 +24,11 @@ export default function Viewport({ currentUrl, isLoading }: ViewportProps) {
     }
   }, [currentUrl, isInternal]);
 
-  const isGoogleSearch = useMemo(() => {
-    return urlObj?.hostname === 'www.google.com' && urlObj?.pathname === '/search';
-  }, [urlObj]);
-
   const isKnownBlocked = useMemo(() => {
     if (!urlObj) return false;
+    // DuckDuckGo HTML is specifically allowed for embedding
+    if (urlObj.hostname.includes('duckduckgo.com')) return false;
+
     const blockedHosts = [
       'www.google.com', 
       'google.com', 
@@ -42,7 +41,9 @@ export default function Viewport({ currentUrl, isLoading }: ViewportProps) {
       'www.linkedin.com',
       'linkedin.com',
       'instagram.com',
-      'www.instagram.com'
+      'www.instagram.com',
+      'youtube.com',
+      'www.youtube.com'
     ];
     return blockedHosts.includes(urlObj.hostname);
   }, [urlObj]);
@@ -59,59 +60,6 @@ export default function Viewport({ currentUrl, isLoading }: ViewportProps) {
           />
         </div>
         <p className="text-xs font-headline tracking-widest text-muted-foreground uppercase">Decrypting Pipeline...</p>
-      </div>
-    );
-  }
-
-  // Specialized UI for Google Search results to handle iframe blocking elegantly
-  if (isGoogleSearch) {
-    const query = urlObj?.searchParams.get('q') || 'Search Query';
-    return (
-      <div className="flex-1 bg-background p-8 overflow-y-auto scrollbar-hide">
-        <div className="max-w-3xl mx-auto space-y-10 py-12">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center text-center space-y-6"
-          >
-            <div className="h-20 w-20 rounded-3xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-[0_0_40px_rgba(71,163,245,0.1)]">
-              <Search className="h-10 w-10 text-primary" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-4xl font-headline font-bold tracking-tight">External Search Ready</h2>
-              <p className="text-muted-foreground text-lg max-w-lg mx-auto leading-relaxed">
-                Zenith is ready to bridge your query to <span className="text-foreground font-semibold">Google Search Intelligence</span>.
-              </p>
-            </div>
-            
-            <div className="w-full max-w-md p-6 glass rounded-2xl border border-white/5 space-y-4">
-              <div className="text-left">
-                <p className="text-[10px] font-headline font-bold text-muted-foreground uppercase tracking-widest mb-1">Target Payload</p>
-                <p className="text-sm font-medium truncate bg-white/5 px-3 py-2 rounded-lg border border-white/5">"{query}"</p>
-              </div>
-              <Button 
-                className="w-full h-12 gap-3 bg-primary text-primary-foreground font-headline font-bold text-base shadow-[0_0_20px_rgba(71,163,245,0.2)] hover:scale-[1.02] transition-transform"
-                onClick={() => window.open(currentUrl, '_blank')}
-              >
-                <Globe className="h-5 w-5" />
-                Launch Live Results
-              </Button>
-            </div>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-10">
-            <div className="p-4 rounded-xl border border-white/5 bg-secondary/10 space-y-2">
-              <ShieldCheck className="h-5 w-5 text-accent" />
-              <h4 className="font-headline font-bold text-sm">Encrypted Bridge</h4>
-              <p className="text-xs text-muted-foreground">Your search intent is protected within the Zenith environment.</p>
-            </div>
-            <div className="p-4 rounded-xl border border-white/5 bg-secondary/10 space-y-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <h4 className="font-headline font-bold text-sm">Neural Sync</h4>
-              <p className="text-xs text-muted-foreground">AI Synthesis remains active for real-time analysis of target data.</p>
-            </div>
-          </div>
-        </div>
       </div>
     );
   }
@@ -181,37 +129,35 @@ export default function Viewport({ currentUrl, isLoading }: ViewportProps) {
         </Button>
       </div>
       
-      {!isKnownBlocked ? (
-        <iframe 
-          src={currentUrl} 
-          className="w-full h-full border-none"
-          title="Web View"
-          sandbox="allow-scripts allow-same-origin allow-forms"
-        />
-      ) : null}
+      <iframe 
+        src={currentUrl} 
+        className="w-full h-full border-none"
+        title="Web View"
+        sandbox="allow-scripts allow-same-origin allow-forms"
+      />
       
-      {/* Fallback Overlay for known blocked sites */}
-      <div className={cn(
-        "absolute inset-0 flex items-center justify-center bg-slate-50/10 pointer-events-none group-hover:pointer-events-auto",
-        isKnownBlocked ? "pointer-events-auto block" : "hidden"
-      )}>
-        <div className="max-w-md w-full mx-4 p-8 glass-dark rounded-3xl shadow-2xl space-y-6 text-center border-white/10">
-           <div className="h-16 w-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-4">
-             <AlertCircle className="h-8 w-8 text-accent" />
-           </div>
-           <h3 className="text-xl font-headline font-bold text-white">Privacy Protection Active</h3>
-           <p className="text-sm text-gray-400 leading-relaxed">
-             The domain <span className="text-white font-mono font-semibold">{urlObj?.hostname}</span> restricts embedded views to ensure session security.
-           </p>
-           <Button 
-             variant="default" 
-             className="w-full bg-primary hover:bg-primary/90 h-12 font-headline font-bold tracking-tight"
-             onClick={() => window.open(currentUrl, '_blank')}
-           >
-             Continue to Site Externally
-           </Button>
+      {/* Fallback Overlay ONLY for known blocked sites that physically cannot be iframed */}
+      {isKnownBlocked && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-50/10 pointer-events-auto">
+          <div className="max-w-md w-full mx-4 p-8 glass-dark rounded-3xl shadow-2xl space-y-6 text-center border-white/10">
+             <div className="h-16 w-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-4">
+               <AlertCircle className="h-8 w-8 text-accent" />
+             </div>
+             <h3 className="text-xl font-headline font-bold text-white">Direct Access Required</h3>
+             <p className="text-sm text-gray-400 leading-relaxed">
+               <span className="text-white font-mono font-semibold">{urlObj?.hostname}</span> restricts embedded views for security. 
+               Launch externally to continue your session.
+             </p>
+             <Button 
+               variant="default" 
+               className="w-full bg-primary hover:bg-primary/90 h-12 font-headline font-bold tracking-tight"
+               onClick={() => window.open(currentUrl, '_blank')}
+             >
+               Launch Site in New Tab
+             </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

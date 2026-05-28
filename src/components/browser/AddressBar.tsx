@@ -34,8 +34,8 @@ export default function AddressBar({ currentUrl, onNavigate, onToggleAi, isAiAct
       }
       onNavigate(url);
     } else {
-      // Treat as search query - Now automatically redirecting to live Google Search
-      onNavigate(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
+      // Use DuckDuckGo HTML version which is much more iframe friendly than Google
+      onNavigate(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`);
     }
   };
 
